@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"npx prisma generate 2>&1\",\"description\":\"Generate Prisma client from schema\"}",
-  "error": "Exit code 1\nPrisma schema loaded from prisma\\schema.prisma.\nError: Prisma schema validation - (get-config wasm)\nError code: P1012\nerror: The datasource property `url` is no longer supported in schema files. Move connection URLs for Migrate to `prisma.config.ts` and pass either `adapter` for a direct database connection or `accelerateUrl` for Accelerate to the `PrismaClient` constructor. See https://pris.ly/d/config-datasource and https://pris.ly/d/prisma7-client-config\n  -->  prisma\\schema.prism...",
-  "timestamp": "2026-04-22T11:58:22.532Z",
+  "tool_input_preview": "{\"command\":\"vercel --version 2>&1\",\"description\":\"Check if Vercel CLI is installed\"}",
+  "error": "Exit code 127\n/usr/bin/bash: line 1: vercel: command not found",
+  "timestamp": "2026-04-22T13:36:40.302Z",
   "retry_count": 1
 }
