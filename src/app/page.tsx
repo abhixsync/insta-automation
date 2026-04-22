@@ -70,7 +70,7 @@ export default function Home() {
     setFindingImage(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/ig/pexels?topic=${encodeURIComponent(topic)}`);
+      const res = await fetch(`/api/ig/generate?topic=${encodeURIComponent(topic)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'No images found');
       setImageUrl(data.imageUrl);

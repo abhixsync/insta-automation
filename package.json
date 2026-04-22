@@ -13,8 +13,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
-    "groq-sdk": "latest",
+    "@fal-ai/client": "^1.9.5",
     "@prisma/client": "^5.22.0",
+    "groq-sdk": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",

@@ -1,0 +1,193 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1776879053439,
+  "projectRoot": "C:\\Work\\Learn\\insta-automation",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "latest",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "latest",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "latest",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "prisma generate && next build",
+      "start": "next start",
+      "db:generate": "prisma generate",
+      "db:migrate": "prisma migrate dev",
+      "db:studio": "prisma studio",
+      "db:deploy": "prisma generate && prisma migrate deploy"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "prisma": {
+      "path": "prisma",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1776879053417,
+      "keyFiles": [
+        "dev.db",
+        "schema.prisma"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1776879053418,
+      "keyFiles": []
+    },
+    "prisma\\migrations": {
+      "path": "prisma\\migrations",
+      "purpose": "Database migrations",
+      "fileCount": 1,
+      "lastAccessed": 1776879053424,
+      "keyFiles": [
+        "migration_lock.toml"
+      ]
+    },
+    "src\\app": {
+      "path": "src\\app",
+      "purpose": "Application code",
+      "fileCount": 3,
+      "lastAccessed": 1776879053424,
+      "keyFiles": [
+        "globals.css",
+        "layout.tsx",
+        "page.tsx"
+      ]
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 5,
+      "lastAccessed": 1776879053424,
+      "keyFiles": [
+        "caption.ts",
+        "crypto.ts",
+        "db.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src\\app\\page.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1776882026510,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 2,
+      "lastAccessed": 1776882031620,
+      "type": "file"
+    },
+    {
+      "path": "prisma\\schema.prisma",
+      "accessCount": 1,
+      "lastAccessed": 1776879180808,
+      "type": "file"
+    },
+    {
+      "path": "src",
+      "accessCount": 1,
+      "lastAccessed": 1776880181028,
+      "type": "directory"
+    },
+    {
+      "path": "src\\app\\api\\data-deletion\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776880184194,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ig\\accounts\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776881161409,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ig\\accounts\\[id]\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776881170583,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ig\\pexels\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776881737966,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\pexels.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776881737978,
+      "type": "file"
+    },
+    {
+      "path": "src\\lib\\flux.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776882017518,
+      "type": "file"
+    },
+    {
+      "path": "src\\app\\api\\ig\\generate\\route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1776882022912,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

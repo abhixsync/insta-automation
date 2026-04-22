@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"vercel --version 2>&1\",\"description\":\"Check if Vercel CLI is installed\"}",
-  "error": "Exit code 127\n/usr/bin/bash: line 1: vercel: command not found",
-  "timestamp": "2026-04-22T13:36:40.302Z",
+  "tool_input_preview": "{\"command\":\"cd \\\"C:/Work/Learn/insta-automation\\\" && git add prisma/migrations/ && git commit -m \\\"$(cat <<'EOF'\\nfix: reset migrations for PostgreSQL (was SQLite)\\n\\nCo-Authored-By: Claude Sonnet 4.6...",
+  "error": "Exit code 1\nThe following paths are ignored by one of your .gitignore files:\nprisma/migrations\nhint: Use -f if you really want to add them.\nhint: Disable this message with \"git config set advice.addIgnoredFile false\"",
+  "timestamp": "2026-04-22T17:48:27.720Z",
   "retry_count": 1
 }
