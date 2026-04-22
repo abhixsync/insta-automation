@@ -38,6 +38,7 @@ async function generateWithPollinations(prompt: string): Promise<string> {
 
 async function generateWithTogetherAI(prompt: string): Promise<string> {
   const apiKey = process.env.TOGETHER_API_KEY;
+  console.log(`[flux] TOGETHER_API_KEY set: ${!!apiKey}`);
   if (!apiKey) throw new Error('TOGETHER_API_KEY is not set');
 
   const res = await fetch('https://api.together.xyz/v1/images/generations', {
@@ -80,9 +81,11 @@ export async function generateImage(topic: string): Promise<string> {
       console.log('[flux] generated via Together AI');
       return url;
     } catch (err) {
-      console.warn('[flux] Together AI failed, falling back to Pollinations:', err);
+      console.error('[flux] Together AI failed, falling back to Pollinations:', err);
     }
   }
+
+  console.log('[flux] TOGETHER_API_KEY missing or Together AI failed — using Pollinations');
 
   const url = await generateWithPollinations(prompt);
   console.log('[flux] generated via Pollinations');
