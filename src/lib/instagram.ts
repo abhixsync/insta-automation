@@ -66,6 +66,14 @@ export async function postImage(
 ): Promise<{ mediaId: string; permalink: string }> {
   const base = apiBase();
 
+  // Pre-flight: check publishing limit (reveals permission/account issues clearly)
+  const limitRes = await fetch(
+    `${base}/${igUserId}/content_publishing_limit?fields=config,quota_usage&access_token=${token}`
+  );
+  const limitData = (await limitRes.json()) as { data?: unknown; error?: unknown };
+  console.log('[ig] publishing_limit check:', JSON.stringify(limitData));
+  if (!limitRes.ok) throw new Error(`Publishing limit check failed: ${JSON.stringify(limitData)}`);
+
   // Step 1: create media container (retry on transient errors — safe, no double-post risk)
   const containerParams = new URLSearchParams({
     image_url: imageUrl,
