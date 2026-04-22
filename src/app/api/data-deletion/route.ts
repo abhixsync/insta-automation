@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const appUrl = process.env.APP_URL ?? 'https://insta-automation-gules.vercel.app';
+    const appUrl = process.env.APP_URL ?? 'https://insta-automation-six.vercel.app';
 
     return NextResponse.json({
       url: `${appUrl}/data-deletion?code=${confirmationCode}`,
