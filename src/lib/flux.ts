@@ -73,21 +73,10 @@ export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
   console.log(`[flux] topic: "${topic}" → prompt: "${prompt.slice(0, 80)}…"`);
 
-  // Together AI returns a stable CDN URL that Meta can reliably fetch.
-  // Pollinations is fallback only (its URLs can be unreliable for Instagram).
+  // Together AI is primary — no silent fallback so errors surface in the response.
   if (process.env.TOGETHER_API_KEY) {
-    try {
-      const url = await generateWithTogetherAI(prompt);
-      console.log('[flux] generated via Together AI');
-      return url;
-    } catch (err) {
-      console.error('[flux] Together AI failed, falling back to Pollinations:', err);
-    }
+    return await generateWithTogetherAI(prompt);
   }
 
-  console.log('[flux] TOGETHER_API_KEY missing or Together AI failed — using Pollinations');
-
-  const url = await generateWithPollinations(prompt);
-  console.log('[flux] generated via Pollinations');
-  return url;
+  return await generateWithPollinations(prompt);
 }
