@@ -49,17 +49,43 @@ async function uploadToImgbb(imageBuffer: ArrayBuffer): Promise<string> {
   return data.data.url as string;
 }
 
+async function generateImageBuffer(prompt: string): Promise<ArrayBuffer> {
+  // Try Pollinations first (free, no key)
+  try {
+    const seed = Math.floor(Math.random() * 1_000_000);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(45_000) });
+    if (res.ok) return await res.arrayBuffer();
+    if (res.status !== 429) throw new Error(`Pollinations error: ${res.status}`);
+    // 429 → fall through to HF
+  } catch (err: unknown) {
+    const is429 = err instanceof Error && err.message.includes('429');
+    if (!is429) throw err;
+  }
+
+  // Fallback: Hugging Face Inference API (free with HF token)
+  const hfToken = process.env.HF_TOKEN;
+  if (!hfToken) throw new Error('Pollinations rate limited and HF_TOKEN is not set');
+
+  const res = await fetch(
+    'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${hfToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ inputs: prompt, parameters: { width: 1024, height: 1024 } }),
+      signal: AbortSignal.timeout(60_000),
+    }
+  );
+
+  if (!res.ok) throw new Error(`HuggingFace error: ${res.status} ${await res.text()}`);
+  return await res.arrayBuffer();
+}
+
 export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
-
-  const seed = Math.floor(Math.random() * 1_000_000);
-  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
-
-  // Download image from Pollinations
-  const imgRes = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(45_000) });
-  if (!imgRes.ok) throw new Error(`Pollinations error: ${imgRes.status}`);
-  const imageBuffer = await imgRes.arrayBuffer();
-
-  // Upload to imgbb for a stable CDN URL that Instagram can fetch
+  const imageBuffer = await generateImageBuffer(prompt);
   return await uploadToImgbb(imageBuffer);
 }
