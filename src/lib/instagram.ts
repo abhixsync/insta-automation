@@ -43,16 +43,27 @@ export async function exchangeCode(code: string) {
     expires_in: number;
   };
 
-  // Step 3: fetch username via /me
+  // Step 3: fetch id, username, account_type via /me
   const profileRes = await fetch(
-    `${apiBase()}/me?fields=username&access_token=${longToken}`
+    `${apiBase()}/me?fields=id,username,account_type&access_token=${longToken}`
   );
-  const profileData = (await profileRes.json()) as { username?: string };
+  const profileData = (await profileRes.json()) as {
+    id?: string;
+    username?: string;
+    account_type?: string;
+  };
+  console.log('[exchangeCode] /me response:', JSON.stringify(profileData), '| token user_id:', user_id);
+
+  const igUserId = profileData.id ?? String(user_id);
   const username = profileData.username ?? `ig_${user_id}`;
+
+  if (profileData.account_type && profileData.account_type !== 'BUSINESS' && profileData.account_type !== 'MEDIA_CREATOR') {
+    throw new Error(`Account type "${profileData.account_type}" cannot publish via API. Must be BUSINESS or MEDIA_CREATOR.`);
+  }
 
   return {
     accessToken: longToken,
-    igUserId: String(user_id),
+    igUserId,
     username,
     expiresAt: new Date(Date.now() + expires_in * 1000),
   };
