@@ -31,6 +31,7 @@ export default function Home() {
   const [caption, setCaption] = useState('');
   const [findingImage, setFindingImage] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const loadData = useCallback(async () => {
@@ -78,6 +79,19 @@ export default function Home() {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to fetch image' });
     } finally {
       setFindingImage(false);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    setRemovingId(id);
+    try {
+      const res = await fetch(`/api/ig/accounts/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to remove account');
+      await loadData();
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to remove account' });
+    } finally {
+      setRemovingId(null);
     }
   };
 
@@ -133,10 +147,17 @@ export default function Home() {
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {a.username[0].toUpperCase()}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">@{a.username}</p>
                   <p className="text-xs text-gray-400 capitalize">{a.status}</p>
                 </div>
+                <button
+                  onClick={() => handleRemove(a.id)}
+                  disabled={removingId === a.id}
+                  className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50 px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                >
+                  {removingId === a.id ? 'Removing…' : 'Remove'}
+                </button>
               </li>
             ))}
           </ul>
