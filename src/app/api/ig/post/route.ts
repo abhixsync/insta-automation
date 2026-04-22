@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = decrypt(account.accessTokenEnc);
     const resolvedUrl = await resolveImageUrl(imageUrl);
-    console.log('[post] resolved image URL:', resolvedUrl);
+    console.log('[post] igUserId:', account.igUserId, '| resolved URL:', resolvedUrl);
     const { mediaId, permalink } = await postImage(account.igUserId, token, resolvedUrl, caption);
 
     await db.post.update({
