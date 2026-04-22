@@ -53,17 +53,18 @@ async function generateWithTogetherAI(prompt: string): Promise<string> {
       height: 1024,
       steps: 4,
       n: 1,
+      response_format: 'url',
     }),
     signal: AbortSignal.timeout(60_000),
   });
 
   const text = await res.text();
+  console.log(`[flux] Together AI status: ${res.status}, body: ${text.slice(0, 300)}`);
   if (!res.ok) throw new Error(`Together AI error: ${res.status} ${text}`);
 
   const data = JSON.parse(text);
-  const item = data.data?.[0];
-  const url = item?.url;
-  if (!url) throw new Error(`Together AI returned no URL. Response: ${text.slice(0, 200)}`);
+  const url = data.data?.[0]?.url;
+  if (!url) throw new Error(`Together AI returned no URL. Response: ${text.slice(0, 300)}`);
   return url;
 }
 
