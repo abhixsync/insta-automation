@@ -66,16 +66,23 @@ export async function postImage(
 ): Promise<{ mediaId: string; permalink: string }> {
   const base = apiBase();
 
-  // Step 1: create media container
+  // Step 1: create media container (retry on transient errors — safe, no double-post risk)
   const containerParams = new URLSearchParams({
     image_url: imageUrl,
     caption,
     access_token: token,
   });
-  const containerRes = await fetch(`${base}/${igUserId}/media?${containerParams}`, {
-    method: 'POST',
-  });
-  const containerData = (await containerRes.json()) as { id?: string; error?: unknown };
+  let containerData: { id?: string; error?: { is_transient?: boolean; code?: number } } = {};
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, attempt * 3000));
+    const containerRes = await fetch(`${base}/${igUserId}/media?${containerParams}`, {
+      method: 'POST',
+    });
+    containerData = await containerRes.json();
+    if (containerData.id) break;
+    const err = containerData.error as { is_transient?: boolean; code?: number } | undefined;
+    if (!err?.is_transient) break; // non-transient — no point retrying
+  }
   if (!containerData.id)
     throw new Error(`Container creation failed: ${JSON.stringify(containerData)}`);
 
