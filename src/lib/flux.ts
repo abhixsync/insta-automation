@@ -25,58 +25,41 @@ async function buildImagePrompt(topic: string): Promise<string> {
   return `${topic}, high quality, photorealistic, Instagram post, vibrant colors`;
 }
 
-async function generateWithPollinations(prompt: string): Promise<string> {
-  const seed = Math.floor(Math.random() * 1_000_000);
-  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+async function uploadToImgbb(imageBuffer: ArrayBuffer): Promise<string> {
+  const apiKey = process.env.IMGBB_API_KEY;
+  if (!apiKey) throw new Error('IMGBB_API_KEY is not set');
 
-  // Pre-fetch to ensure image is generated before we return the URL
-  const res = await fetch(url, { signal: AbortSignal.timeout(45_000) });
-  if (!res.ok) throw new Error(`Pollinations error: ${res.status}`);
+  const base64 = Buffer.from(imageBuffer).toString('base64');
 
-  return url;
-}
+  const form = new URLSearchParams();
+  form.append('key', apiKey);
+  form.append('image', base64);
 
-async function generateWithTogetherAI(prompt: string): Promise<string> {
-  const apiKey = process.env.TOGETHER_API_KEY;
-  console.log(`[flux] TOGETHER_API_KEY set: ${!!apiKey}`);
-  if (!apiKey) throw new Error('TOGETHER_API_KEY is not set');
-
-  const res = await fetch('https://api.together.xyz/v1/images/generations', {
+  const res = await fetch('https://api.imgbb.com/1/upload', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'black-forest-labs/FLUX.1-schnell-Free',
-      prompt,
-      width: 1024,
-      height: 1024,
-      steps: 4,
-      n: 1,
-      response_format: 'url',
-    }),
-    signal: AbortSignal.timeout(60_000),
+    body: form,
+    signal: AbortSignal.timeout(30_000),
   });
 
-  const text = await res.text();
-  console.log(`[flux] Together AI status: ${res.status}, body: ${text.slice(0, 300)}`);
-  if (!res.ok) throw new Error(`Together AI error: ${res.status} ${text}`);
+  const data = await res.json();
+  if (!res.ok || !data?.data?.url) {
+    throw new Error(`imgbb upload failed: ${JSON.stringify(data)}`);
+  }
 
-  const data = JSON.parse(text);
-  const url = data.data?.[0]?.url;
-  if (!url) throw new Error(`Together AI returned no URL. Response: ${text.slice(0, 300)}`);
-  return url;
+  return data.data.url as string;
 }
 
 export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
-  console.log(`[flux] topic: "${topic}" → prompt: "${prompt.slice(0, 80)}…"`);
 
-  // Together AI is primary — no silent fallback so errors surface in the response.
-  if (process.env.TOGETHER_API_KEY) {
-    return await generateWithTogetherAI(prompt);
-  }
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
-  return await generateWithPollinations(prompt);
+  // Download image from Pollinations
+  const imgRes = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(45_000) });
+  if (!imgRes.ok) throw new Error(`Pollinations error: ${imgRes.status}`);
+  const imageBuffer = await imgRes.arrayBuffer();
+
+  // Upload to imgbb for a stable CDN URL that Instagram can fetch
+  return await uploadToImgbb(imageBuffer);
 }

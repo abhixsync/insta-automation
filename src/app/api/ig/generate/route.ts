@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateImage } from '@/lib/flux';
 import { generateCaption } from '@/lib/caption';
 
+export const maxDuration = 60; // Pollinations + imgbb can take up to 45s
+
 export async function GET(request: NextRequest) {
   const topic = new URL(request.url).searchParams.get('topic')?.trim();
   if (!topic) return NextResponse.json({ error: 'topic is required' }, { status: 400 });
