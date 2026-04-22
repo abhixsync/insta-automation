@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model IgAccount {
+  id             String   @id @default(cuid())
+  igUserId       String   @unique
+  username       String
+  accessTokenEnc String   // AES-256-GCM encrypted, stored as base64
+  tokenExpiresAt DateTime
+  status         String   @default("active") // active | revoked | expired
+  connectedAt    DateTime @default(now())
+  posts          Post[]
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  igAccountId String
+  imageUrl    String
+  caption     String    @default("")
+  mediaId     String?
+  permalink   String?
+  status      String    @default("pending") // pending | published | failed
+  error       String?
+  createdAt   DateTime  @default(now())
+  publishedAt DateTime?
+
+  igAccount IgAccount @relation(fields: [igAccountId], references: [id])
+}
+
+model OAuthState {
+  state     String   @id
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
