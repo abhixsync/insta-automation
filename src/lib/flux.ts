@@ -25,16 +25,15 @@ async function buildImagePrompt(topic: string): Promise<string> {
   return `${topic}, high quality, photorealistic, Instagram post, vibrant colors`;
 }
 
-async function uploadToImgbb(imageBuffer: ArrayBuffer): Promise<string> {
+async function uploadUrlToImgbb(imageUrl: string): Promise<string> {
   const apiKey = process.env.IMGBB_API_KEY;
   if (!apiKey) throw new Error('IMGBB_API_KEY is not set');
 
-  const base64 = Buffer.from(imageBuffer).toString('base64');
-
   const form = new URLSearchParams();
   form.append('key', apiKey);
-  form.append('image', base64);
+  form.append('image', imageUrl); // imgbb fetches the URL itself — no binary download needed
 
+  console.log('[flux] uploading URL to imgbb...');
   const res = await fetch('https://api.imgbb.com/1/upload', {
     method: 'POST',
     body: form,
@@ -42,6 +41,7 @@ async function uploadToImgbb(imageBuffer: ArrayBuffer): Promise<string> {
   });
 
   const data = await res.json();
+  console.log(`[flux] imgbb status: ${res.status}, url: ${data?.data?.url}`);
   if (!res.ok || !data?.data?.url) {
     throw new Error(`imgbb upload failed: ${JSON.stringify(data)}`);
   }
@@ -49,52 +49,14 @@ async function uploadToImgbb(imageBuffer: ArrayBuffer): Promise<string> {
   return data.data.url as string;
 }
 
-async function generateImageBuffer(prompt: string): Promise<ArrayBuffer> {
-  // Try Pollinations first (free, no key)
-  try {
-    const seed = Math.floor(Math.random() * 1_000_000);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
-    console.log('[flux] trying Pollinations...');
-    const res = await fetch(url, { signal: AbortSignal.timeout(45_000) });
-    console.log(`[flux] Pollinations status: ${res.status}`);
-    if (res.ok) return await res.arrayBuffer();
-    if (res.status !== 429) throw new Error(`Pollinations error: ${res.status}`);
-    console.log('[flux] Pollinations 429 — falling back to HuggingFace');
-  } catch (err: unknown) {
-    const is429 = err instanceof Error && err.message.includes('429');
-    if (!is429) throw err;
-    console.log('[flux] Pollinations 429 (caught) — falling back to HuggingFace');
-  }
-
-  // Fallback: Hugging Face Inference API (free with HF token)
-  const hfToken = process.env.HF_TOKEN;
-  if (!hfToken) throw new Error('Pollinations rate limited and HF_TOKEN is not set');
-
-  console.log('[flux] trying HuggingFace...');
-  const res = await fetch(
-    'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${hfToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ inputs: prompt, parameters: { width: 1024, height: 1024 } }),
-      signal: AbortSignal.timeout(60_000),
-    }
-  );
-
-  console.log(`[flux] HuggingFace status: ${res.status}`);
-  if (!res.ok) throw new Error(`HuggingFace error: ${res.status} ${await res.text()}`);
-  return await res.arrayBuffer();
-}
-
 export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
   console.log(`[flux] prompt: "${prompt.slice(0, 100)}"`);
-  const imageBuffer = await generateImageBuffer(prompt);
-  console.log(`[flux] image buffer size: ${imageBuffer.byteLength} bytes`);
-  const url = await uploadToImgbb(imageBuffer);
-  console.log(`[flux] imgbb URL: ${url}`);
-  return url;
+
+  // Build Pollinations URL — imgbb will fetch it directly (avoids downloading in our function)
+  const seed = Math.floor(Math.random() * 1_000_000);
+  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+  console.log('[flux] passing Pollinations URL to imgbb for hosting...');
+
+  return await uploadUrlToImgbb(pollinationsUrl);
 }
