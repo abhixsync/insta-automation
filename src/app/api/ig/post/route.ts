@@ -3,6 +3,18 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { decrypt } from '@/lib/crypto';
 import { postImage } from '@/lib/instagram';
+import { uploadToImgbb } from '@/lib/flux';
+
+export const maxDuration = 60;
+
+async function resolveImageUrl(imageUrl: string): Promise<string> {
+  if (!imageUrl.includes('pollinations.ai')) return imageUrl;
+  // Download Pollinations image (already generated/cached by browser preview) and host on imgbb
+  const res = await fetch(imageUrl, { signal: AbortSignal.timeout(30_000) });
+  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+  const buffer = await res.arrayBuffer();
+  return await uploadToImgbb(buffer);
+}
 
 const BodySchema = z.object({
   accountId: z.string(),
@@ -31,7 +43,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const token = decrypt(account.accessTokenEnc);
-    const { mediaId, permalink } = await postImage(account.igUserId, token, imageUrl, caption);
+    const resolvedUrl = await resolveImageUrl(imageUrl);
+    const { mediaId, permalink } = await postImage(account.igUserId, token, resolvedUrl, caption);
 
     await db.post.update({
       where: { id: post.id },

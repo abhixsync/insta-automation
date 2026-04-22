@@ -25,15 +25,19 @@ async function buildImagePrompt(topic: string): Promise<string> {
   return `${topic}, high quality, photorealistic, Instagram post, vibrant colors`;
 }
 
-async function uploadUrlToImgbb(imageUrl: string): Promise<string> {
+/**
+ * Upload a binary image buffer to imgbb and return the permanent CDN URL.
+ * Called at post time (not at preview time) so Pollinations has already generated the image.
+ */
+export async function uploadToImgbb(imageBuffer: ArrayBuffer): Promise<string> {
   const apiKey = process.env.IMGBB_API_KEY;
   if (!apiKey) throw new Error('IMGBB_API_KEY is not set');
 
+  const base64 = Buffer.from(imageBuffer).toString('base64');
   const form = new URLSearchParams();
   form.append('key', apiKey);
-  form.append('image', imageUrl); // imgbb fetches the URL itself — no binary download needed
+  form.append('image', base64);
 
-  console.log('[flux] uploading URL to imgbb...');
   const res = await fetch('https://api.imgbb.com/1/upload', {
     method: 'POST',
     body: form,
@@ -41,7 +45,6 @@ async function uploadUrlToImgbb(imageUrl: string): Promise<string> {
   });
 
   const data = await res.json();
-  console.log(`[flux] imgbb status: ${res.status}, url: ${data?.data?.url}`);
   if (!res.ok || !data?.data?.url) {
     throw new Error(`imgbb upload failed: ${JSON.stringify(data)}`);
   }
@@ -49,14 +52,13 @@ async function uploadUrlToImgbb(imageUrl: string): Promise<string> {
   return data.data.url as string;
 }
 
+/**
+ * Returns a Pollinations URL immediately — no waiting for generation.
+ * The browser loads the preview, warming Pollinations cache.
+ * At post time, call uploadToImgbb() to get a stable CDN URL for Instagram.
+ */
 export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
-  console.log(`[flux] prompt: "${prompt.slice(0, 100)}"`);
-
-  // Build Pollinations URL — imgbb will fetch it directly (avoids downloading in our function)
   const seed = Math.floor(Math.random() * 1_000_000);
-  const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
-  console.log('[flux] passing Pollinations URL to imgbb for hosting...');
-
-  return await uploadUrlToImgbb(pollinationsUrl);
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
 }
