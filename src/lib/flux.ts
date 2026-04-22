@@ -69,14 +69,19 @@ export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
   console.log(`[flux] topic: "${topic}" → prompt: "${prompt.slice(0, 80)}…"`);
 
-  try {
-    const url = await generateWithPollinations(prompt);
-    console.log('[flux] generated via Pollinations');
-    return url;
-  } catch (err) {
-    console.warn('[flux] Pollinations failed, falling back to Together AI:', err);
-    const url = await generateWithTogetherAI(prompt);
-    console.log('[flux] generated via Together AI');
-    return url;
+  // Together AI returns a stable CDN URL that Meta can reliably fetch.
+  // Pollinations is fallback only (its URLs can be unreliable for Instagram).
+  if (process.env.TOGETHER_API_KEY) {
+    try {
+      const url = await generateWithTogetherAI(prompt);
+      console.log('[flux] generated via Together AI');
+      return url;
+    } catch (err) {
+      console.warn('[flux] Together AI failed, falling back to Pollinations:', err);
+    }
   }
+
+  const url = await generateWithPollinations(prompt);
+  console.log('[flux] generated via Pollinations');
+  return url;
 }
