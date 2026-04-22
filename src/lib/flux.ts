@@ -54,19 +54,23 @@ async function generateImageBuffer(prompt: string): Promise<ArrayBuffer> {
   try {
     const seed = Math.floor(Math.random() * 1_000_000);
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+    console.log('[flux] trying Pollinations...');
     const res = await fetch(url, { signal: AbortSignal.timeout(45_000) });
+    console.log(`[flux] Pollinations status: ${res.status}`);
     if (res.ok) return await res.arrayBuffer();
     if (res.status !== 429) throw new Error(`Pollinations error: ${res.status}`);
-    // 429 → fall through to HF
+    console.log('[flux] Pollinations 429 — falling back to HuggingFace');
   } catch (err: unknown) {
     const is429 = err instanceof Error && err.message.includes('429');
     if (!is429) throw err;
+    console.log('[flux] Pollinations 429 (caught) — falling back to HuggingFace');
   }
 
   // Fallback: Hugging Face Inference API (free with HF token)
   const hfToken = process.env.HF_TOKEN;
   if (!hfToken) throw new Error('Pollinations rate limited and HF_TOKEN is not set');
 
+  console.log('[flux] trying HuggingFace...');
   const res = await fetch(
     'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
     {
@@ -80,12 +84,17 @@ async function generateImageBuffer(prompt: string): Promise<ArrayBuffer> {
     }
   );
 
+  console.log(`[flux] HuggingFace status: ${res.status}`);
   if (!res.ok) throw new Error(`HuggingFace error: ${res.status} ${await res.text()}`);
   return await res.arrayBuffer();
 }
 
 export async function generateImage(topic: string): Promise<string> {
   const prompt = await buildImagePrompt(topic);
+  console.log(`[flux] prompt: "${prompt.slice(0, 100)}"`);
   const imageBuffer = await generateImageBuffer(prompt);
-  return await uploadToImgbb(imageBuffer);
+  console.log(`[flux] image buffer size: ${imageBuffer.byteLength} bytes`);
+  const url = await uploadToImgbb(imageBuffer);
+  console.log(`[flux] imgbb URL: ${url}`);
+  return url;
 }
